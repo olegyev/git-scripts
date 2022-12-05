@@ -1,6 +1,8 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+rem NB! Place this script into a root folder of your project, which is under GIT control
+
 rem Checkout the master branch
 git checkout master
 
@@ -12,30 +14,23 @@ for /f "tokens=*" %%f in ('git ls-tree --full-tree -r --name-only HEAD') do (
   set /a i+=1
   set files[!i!]=%%f
 )
-
 set last_index=%i%
 
-rem Display array elements
-rem TO CALCULATE ADDITIONS/DELETES, SEE 
-rem https://stackoverflow.com/questions/9933325/is-there-a-way-of-having-git-show-lines-added-lines-changed-and-lines-removed
-rem e.g. git log --numstat --oneline src/main/java/app/controllers/ClientController.java
-
+rem Calculate a number of edits (additions and deletions) for each file
 set lines=
 
+rem A git command returns lines like '3       1       .gitignore'
 for /L %%i in (1,1,%last_index%) do (
-  @echo !files[%%i]! >> tmp.txt
-  
-  set commits=
-  
+  set edits=
   for /f "tokens=1, 2" %%a in ('git log --numstat --pretty^="format:" !files[%%i]!') do (
-    set /a commits[%%i]+=%%a + %%b
+    set /a edits[%%i]+=%%a + %%b
   )
-
-  set lines[%%i]=!commits[%%i]! 
+  set lines[%%i]=!edits[%%i]! 
 )
 
+rem Write array into a file
 for /L %%i in (1,1,%last_index%) do (
-  @echo !lines[%%i]! >> tmp3.txt
+  @echo !lines[%%i]! >> number_of_edits.txt
 )
 
 sort /R tmp3.txt
